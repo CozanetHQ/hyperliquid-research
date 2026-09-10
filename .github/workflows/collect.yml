@@ -1,0 +1,27 @@
+name: Collect Hyperliquid Market State
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # every 10 minutes (GH Actions cron floor)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Snapshot market state
+        run: python collect.py
+      - name: Commit tape
+        run: |
+          git config user.email "fassdavid722@gmail.com"
+          git config user.name "CozyCrypto"
+          git add data/snapshots/
+          git commit -m "tape: $(date -u +%Y-%m-%dT%H:%M)Z market snapshot" || echo "no new data"
+          git push
